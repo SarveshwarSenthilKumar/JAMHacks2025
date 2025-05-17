@@ -27,6 +27,7 @@ def login():
             user = users[0]
             if user["password"] == password:
                 session["name"] = username
+                session["id"] = user["id"]
                 return redirect("/")
 
             return render_template("/auth/login.html", error="You have entered an incorrect password! Please try again!")
@@ -42,6 +43,11 @@ def signup():
     fullName = request.form.get("name").strip()
     username = request.form.get("username").strip().lower()
     password = request.form.get("password").strip()
+    gender = request.form.get("gender")
+    dateOfBirth = request.form.get("dateOfBirth")
+    location = request.form.get("location")
+    role = request.form.get("role")
+    phoneNumber = request.form.get("phoneNumber")
 
     validName = verifyName(fullName)
     if not validName[0]:
@@ -65,9 +71,13 @@ def signup():
     password = hash(password)
         
     db = SQL("sqlite:///users.db")
-    db.execute("INSERT INTO users (username, password, emailaddress, name, dateJoined) VALUES (?,?,?,?,?)", username, password, emailAddress, fullName, dateJoined)
+    db.execute("INSERT INTO users (username, password, emailaddress, name, dateJoined, dateOfBirth, location, gender, phoneNumber, role) VALUES (?,?,?,?,?,?,?,?,?,?)", username, password, emailAddress, fullName, dateJoined, dateOfBirth, location, gender, phoneNumber, role)
+
+    db = SQL("sqlite:///users.db")
+    user = db.execute("SELECT * FROM users WHERE username = :username", username=username)[0]
 
     session["name"] = username
+    session["id"] = user["id"]
         
     return redirect("/")
     
