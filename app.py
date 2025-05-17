@@ -53,6 +53,14 @@ def index():
                 return render_template("patient_dashboard.html")
             return render_template("/auth/loggedin.html")
 
+@app.route("/termsandconditions")
+def termsandconditions():
+    return render_template("termsandconditions.html")
+
+@app.route("/details")
+def details():
+    return render_template("implications.html")
+
 @app.route('/autocomplete/cities')
 def autocomplete_cities():
     query = request.args.get('q')
@@ -90,6 +98,8 @@ def analyze_symptoms():
         return jsonify({"error": "Not authenticated"}), 401
         
     symptoms = request.json.get("symptoms")
+    location = request.json.get("location", "")  # Get location from request
+    
     if not symptoms:
         return jsonify({"error": "No symptoms provided"}), 400
         
@@ -129,8 +139,12 @@ def analyze_symptoms():
         response = analyze_symptoms_with_retry(client, messages)
         analysis = response.choices[0].message.content
         
+        # Get relevant helplines based on location
+        helplines = get_helplines(location)
+        
         return jsonify({
-            "analysis": analysis
+            "analysis": analysis,
+            "helplines": helplines
         })
         
     except openai.AuthenticationError:
@@ -140,6 +154,46 @@ def analyze_symptoms():
     except Exception as e:
         print(f"Error analyzing symptoms: {str(e)}")
         return jsonify({"error": "Failed to analyze symptoms. Please try again later."}), 500
+
+def get_helplines(location):
+    """Get relevant helplines based on location"""
+    # Default helplines (Canada)
+    helplines = {
+        "emergency": "911",
+        "poison_control": "1-800-268-9017",
+        "mental_health": "1-833-456-4566",
+        "health_info": "811"
+    }
+    
+    # Add location-specific helplines
+    if location:
+        location = location.lower()
+        if "ontario" in location or "toronto" in location:
+            helplines.update({
+                "telehealth": "1-866-797-0000",
+                "covid": "1-888-999-6488",
+                "mental_health": "1-866-531-2600"
+            })
+        elif "british columbia" in location or "vancouver" in location:
+            helplines.update({
+                "telehealth": "811",
+                "covid": "1-888-268-4319",
+                "mental_health": "1-800-784-2433"
+            })
+        elif "alberta" in location or "calgary" in location or "edmonton" in location:
+            helplines.update({
+                "telehealth": "811",
+                "covid": "1-844-343-0971",
+                "mental_health": "1-877-303-2642"
+            })
+        elif "quebec" in location or "montreal" in location:
+            helplines.update({
+                "telehealth": "811",
+                "covid": "1-877-644-4545",
+                "mental_health": "1-866-277-3553"
+            })
+    
+    return helplines
 
 @app.route("/dashboard")
 def dashboard():
