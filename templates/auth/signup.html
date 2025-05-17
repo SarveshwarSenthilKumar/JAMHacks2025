@@ -418,15 +418,8 @@
                     
                     <div class="form-group">
                         <label for="location">Location</label>
-                        <input list="cities" name="location" id="location" placeholder="Enter your city" required>
-                        <datalist id="cities">
-                            <option value="Toronto">
-                            <option value="Mississauga">
-                            <option value="Vancouver">
-                            <option value="Calgary">
-                            <option value="Montreal">
-                            <option value="Ottawa">
-                        </datalist>
+                        <input id="cityInput" name="location" type="text" placeholder="Enter your city" list="citySuggestions" required>
+                        <datalist id="citySuggestions"></datalist>
                     </div>
                     
                     <div class="form-group">
@@ -455,4 +448,24 @@
         </div>
     </div>
 </body>
+<script>
+  const input = document.getElementById('cityInput');
+
+  input.addEventListener('input', async () => {
+    const query = input.value;
+    if (query.length < 2) return;
+
+    const res = await fetch(`/autocomplete/cities?q=${encodeURIComponent(query)}`);
+    const cities = await res.json();
+
+    const datalist = document.getElementById('citySuggestions');
+    datalist.innerHTML = '';
+
+    cities.forEach(city => {
+      const option = document.createElement('option');
+      option.value = city;
+      datalist.appendChild(option);
+    });
+  });
+</script>
 </html>
